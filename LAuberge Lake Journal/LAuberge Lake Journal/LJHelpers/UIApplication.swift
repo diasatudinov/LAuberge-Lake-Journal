@@ -1,8 +1,25 @@
 //
-//  File.swift
+//  UIApplication.swift
 //  LAuberge Lake Journal
 //
-//  Created by Dias Atudinov on 17.02.2026.
 //
 
-import Foundation
+import UIKit
+import SwiftUI
+
+extension UIApplication {
+    func hideKeyboard() {
+        sendAction(#selector(UIResponder.resignFirstResponder),
+                   to: nil,
+                   from: nil,
+                   for: nil)
+    }
+}
+
+extension View {
+    func hideKeyboardOnTap() -> some View {
+        self.onTapGesture {
+            UIApplication.shared.hideKeyboard()
+        }
+    }
+}

@@ -1,3 +1,10 @@
+//
+//  ImageStore.swift
+//  LAuberge Lake Journal
+//
+//
+
+
 import UIKit
 
 final class ImageStore {

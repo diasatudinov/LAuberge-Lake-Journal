@@ -1,3 +1,10 @@
+//
+//  ImageCache.swift
+//  LAuberge Lake Journal
+//
+//
+
+
 import UIKit
 import ImageIO
 

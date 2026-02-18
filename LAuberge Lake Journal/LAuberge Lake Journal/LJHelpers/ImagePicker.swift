@@ -1,3 +1,10 @@
+//
+//  ImagePicker.swift
+//  LAuberge Lake Journal
+//
+//
+
+
 import SwiftUI
 
 struct ImagePicker: UIViewControllerRepresentable {

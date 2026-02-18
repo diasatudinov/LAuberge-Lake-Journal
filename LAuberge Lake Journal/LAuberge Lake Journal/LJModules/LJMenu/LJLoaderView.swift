@@ -2,7 +2,6 @@
 //  LLLoaderView.swift
 //  LAuberge Lake Journal
 //
-//  Created by Dias Atudinov on 17.02.2026.
 //
 
 
@@ -16,7 +15,7 @@ struct LJLoaderView: View {
     var body: some View {
         ZStack {
             ZStack {
-                Image(.loaderViewLogoLL)
+                Image(.loaderViewLogoLJ)
                     .resizable()
                     .ignoresSafeArea()
                     .scaledToFill()
@@ -27,7 +26,7 @@ struct LJLoaderView: View {
             
             VStack(spacing: 0) {
                 
-                Image(.loaderViewLogoLL)
+                Image(.loaderViewLogoLJ)
                     .resizable()
                     .scaledToFit()
                     .frame(height: 200)
@@ -83,5 +82,5 @@ struct LJLoaderView: View {
 }
 
 #Preview {
-    LLLoaderView()
+    LJLoaderView()
 }

@@ -10,7 +10,7 @@ struct LJHomeView: View {
     @ObservedObject var viewModel: LJLakeViewModel
     var body: some View {
         VStack {
-            HStack(spacing: .zero) {
+            HStack(alignment: .top, spacing: .zero) {
                 
                 Text("Lake journal")
                     .font(.system(size: 20, weight: .semibold))
@@ -24,7 +24,7 @@ struct LJHomeView: View {
                     Text("+")
                         .font(.system(size: 32, weight: .light))
                         .foregroundStyle(.white)
-                        .padding(.vertical, 8).padding(.horizontal, 11)
+                        .padding(.horizontal, 11)
                 }
             }.padding(.vertical, 8)
             

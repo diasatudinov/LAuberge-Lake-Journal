@@ -181,6 +181,22 @@ struct LJLakeDetailsView: View {
                         
                     }.buttonStyle(.plain)
                         .frame(maxWidth: .infinity, alignment: .trailing)
+                    
+                    Button {
+                        viewModel.delete(lake: lake)
+                        dismiss()
+                    } label: {
+                        Image(systemName: "trash")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 14)
+                            .foregroundStyle(.white)
+                            .padding(14)
+                            .background(.secondaryBlack)
+                            .clipShape(Circle())
+                        
+                        
+                    }.buttonStyle(.plain)
                 }
                 .padding(.horizontal)
                 .frame(maxHeight: .infinity, alignment: .top)

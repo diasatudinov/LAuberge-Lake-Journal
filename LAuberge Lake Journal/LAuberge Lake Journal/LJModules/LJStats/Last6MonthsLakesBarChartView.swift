@@ -1,102 +1,218 @@
+//
+//  Last6MonthsLakesBarChartView.swift
+//  LAuberge Lake Journal
+//
+//
+
+
 import SwiftUI
 import Charts
 
 struct Last6MonthsLakesBarChartView: View {
-    @ObservedObject var viewModel: LakesViewModel
+    @ObservedObject var viewModel: LJLakeViewModel
 
-    private struct MonthCount: Identifiable {
-        let id = UUID()
-        let monthStart: Date
-        let monthLabel: String
-        let count: Int
-    }
-
-    private var data: [MonthCount] {
-        let cal = Calendar.current
-        let now = Date()
-        let thisMonthStart = cal.date(from: cal.dateComponents([.year, .month], from: now))!
-
-        // последние 6 месяцев включая текущий (от старого к новому)
-        let starts: [Date] = (0..<6).reversed().compactMap { offset in
-            cal.date(byAdding: .month, value: -offset, to: thisMonthStart)
+        private struct MonthStat: Identifiable, Equatable {
+            let id = UUID()
+            let monthStart: Date
+            let monthLabel: String        // короткое: "FEB"
+            let fullMonthLabel: String    // полное: "February 2026" (по локали)
+            let count: Int
+            let isMax: Bool
         }
 
-        // подготовим словарь monthStart -> count
-        var dict: [Date: Int] = [:]
-        for s in starts { dict[s] = 0 }
+        @State private var stats: [MonthStat] = []
+        @State private var maxCount: Int = 0
+        @State private var maxMonth: MonthStat? = nil
 
-        for lake in viewModel.lakes {
-            let m = cal.date(from: cal.dateComponents([.year, .month], from: lake.date))!
-            if dict[m] != nil {
-                dict[m, default: 0] += 1
-            }
-        }
+        private let zeroBarHeight: CGFloat = 8
 
-        let fmt = DateFormatter()
-        fmt.locale = .current
-        fmt.dateFormat = "MMM" // "Feb", "Mar" и т.д. (по локали)
+        var body: some View {
+            VStack(spacing: 10) {
 
-        return starts.map { s in
-            MonthCount(
-                monthStart: s,
-                monthLabel: fmt.string(from: s).uppercased(),
-                count: dict[s, default: 0]
-            )
-        }
-    }
+                GeometryReader { geo in
+                    let totalHeight = geo.size.height
+                    let headerHeight: CGFloat = 26
+                    let barAreaHeight = max(1, totalHeight - headerHeight)
 
-    private var maxCount: Int {
-        data.map(\.count).max() ?? 0
-    }
+                    HStack(alignment: .bottom, spacing: 25) {
+                        ForEach(stats) { item in
+                            VStack(spacing: 0) {
 
-    var body: some View {
-        Chart {
-            ForEach(data) { item in
-                BarMark(
-                    x: .value("Month", item.monthStart),
-                    y: .value("Count", item.count)
-                )
-                .cornerRadius(8)
+                                // бар
+                                ZStack(alignment: .bottom) {
+                                    let h = barHeight(count: item.count, barAreaHeight: barAreaHeight)
 
-                // число ВНУТРИ столбика
-                .annotation(position: .overlay, alignment: .center) {
-                    if item.count > 0 {
-                        Text("\(item.count)")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .monospacedDigit()
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .background(.black.opacity(0.25))
-                            .clipShape(Capsule())
-                    }
-                }
+                                    UnevenRoundedRectangle(
+                                        topLeadingRadius: 12,
+                                        bottomLeadingRadius: 0,
+                                        bottomTrailingRadius: 0,
+                                        topTrailingRadius: 12
+                                    )
+                                    .fill(Color.accentBlue)
+                                    .frame(height: h)
+                                    .overlay(alignment: .top) {
+                                        if item.isMax {
+                                            Text("MAX")
+                                                .font(.system(size: 12, weight: .regular))
+                                                .foregroundStyle(.white)
+                                                .padding(.top)
+                                        }
+                                    }
 
-                // название месяца НАД столбиком + MAX у максимального
-                .annotation(position: .top, alignment: .center) {
-                    VStack(spacing: 2) {
-                        Text(item.monthLabel)
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.secondary)
+                                    if item.count > 0 {
+                                        Text("(\(item.count))")
+                                            .font(.system(size: 12, weight: .regular))
+                                            .foregroundStyle(.white.opacity(0.5))
+                                            .monospacedDigit()
+                                            .padding(.bottom, min(8, max(2, h * 0.25)))
+                                    }
+                                }
 
-                        if maxCount > 0, item.count == maxCount {
-                            Text("MAX")
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(.secondary)
+                                // подпись месяца
+                                VStack(spacing: 2) {
+                                    Text(item.monthLabel)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(.white.opacity(0.5))
+                                }
+                                .frame(height: headerHeight)
+                            }
+                            .frame(maxWidth: .infinity)
                         }
                     }
-                    .padding(.bottom, 2)
+                    .frame(height: totalHeight)
+                }
+                .frame(height: 197)
+
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundStyle(.white.opacity(0.05))
+                
+                // ✅ Инфа под графиком про максимальный месяц
+                if let maxMonth, maxCount > 0 {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Top month")
+                                .font(.system(size: 17, weight: .regular))
+                                .foregroundStyle(.white.opacity(0.5))
+                            
+                            Text(maxMonth.fullMonthLabel)
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(.white)
+                        }
+                        
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 5) {
+                            Text("quantity")
+                                .font(.system(size: 17, weight: .regular))
+                                .foregroundStyle(.white.opacity(0.5))
+                            Text("\(maxMonth.count)")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .monospacedDigit()
+                        }
+                        
+                    }
+                } else {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Top month")
+                                .font(.system(size: 17, weight: .regular))
+                                .foregroundStyle(.white.opacity(0.5))
+                            
+                            Text("-")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(.white)
+                        }
+                        
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 5) {
+                            Text("quantity")
+                                .font(.system(size: 17, weight: .regular))
+                                .foregroundStyle(.white.opacity(0.5))
+                            Text("-")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .monospacedDigit()
+                        }
+                        
+                    }
                 }
             }
+            .task { await rebuild() }
+            .onChange(of: viewModel.lakes.count) { _ in
+                Task { await rebuild() }
+            }
         }
-        .chartXAxis(.hidden)
-        .chartYAxis(.hidden)
-        .chartLegend(.hidden)
-        .chartPlotStyle { plotArea in
-            plotArea
-                .background(Color.clear)
+
+        private func barHeight(count: Int, barAreaHeight: CGFloat) -> CGFloat {
+            guard maxCount > 0 else { return zeroBarHeight }
+            if count == 0 { return zeroBarHeight }
+            let scaled = CGFloat(count) / CGFloat(maxCount) * barAreaHeight
+            return max(zeroBarHeight, scaled)
         }
-        .frame(height: 220)
-        .padding()
+
+        @MainActor
+        private func rebuild() async {
+            let snapshot = viewModel.lakes
+
+            let result = await Task.detached(priority: .utility) { () -> ([MonthStat], Int, MonthStat?) in
+                let cal = Calendar.current
+                let now = Date()
+                let thisMonthStart = cal.date(from: cal.dateComponents([.year, .month], from: now))!
+
+                let monthStarts: [Date] = (0..<6).reversed().compactMap { offset in
+                    cal.date(byAdding: .month, value: -offset, to: thisMonthStart)
+                }
+
+                var counts: [Date: Int] = [:]
+                for m in monthStarts { counts[m] = 0 }
+
+                for lake in snapshot {
+                    let m = cal.date(from: cal.dateComponents([.year, .month], from: lake.date))!
+                    if counts[m] != nil { counts[m, default: 0] += 1 }
+                }
+
+                let shortFmt = DateFormatter()
+                shortFmt.locale = .current
+                shortFmt.dateFormat = "MMM"
+
+                let fullFmt = DateFormatter()
+                fullFmt.locale = .current
+                fullFmt.dateFormat = "LLLL"   // February 2026 (по локали)
+
+                let raw = monthStarts.map { start in
+                    (
+                        start: start,
+                        short: shortFmt.string(from: start).uppercased(),
+                        full: fullFmt.string(from: start),
+                        count: counts[start, default: 0]
+                    )
+                }
+
+                let maxCount = raw.map(\.count).max() ?? 0
+
+                let stats = raw.map { item in
+                    MonthStat(
+                        monthStart: item.start,
+                        monthLabel: item.short,
+                        fullMonthLabel: item.full,
+                        count: item.count,
+                        isMax: maxCount > 0 && item.count == maxCount
+                    )
+                }
+
+                let maxMonth = stats.first(where: { $0.isMax })
+                return (stats, maxCount, maxMonth)
+            }.value
+
+            stats = result.0
+            maxCount = result.1
+            maxMonth = result.2
+        }
     }
+
+#Preview {
+    Last6MonthsLakesBarChartView(viewModel: LJLakeViewModel())
 }

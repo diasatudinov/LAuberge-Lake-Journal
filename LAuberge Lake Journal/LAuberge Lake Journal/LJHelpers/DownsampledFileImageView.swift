@@ -21,6 +21,11 @@ struct DownsampledFileImageView: View {
                     Image(uiImage: ui)
                         .resizable()
                 } else {
+                    Image(systemName: "")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundStyle(.white.opacity(0.85))
+                        .padding(18)
                 }
             }
             .clipped()

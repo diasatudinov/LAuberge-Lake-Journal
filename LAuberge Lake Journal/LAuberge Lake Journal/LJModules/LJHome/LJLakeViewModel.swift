@@ -12,7 +12,8 @@ final class LJLakeViewModel: ObservableObject {
             saveLakes()
         }
     }
-    
+    @Published var lakesVersion: Int = 0
+
     
     // MARK: – UserDefaults keys
     private var outfitsFileURL: URL {
@@ -76,5 +77,7 @@ final class LJLakeViewModel: ObservableObject {
         lakes[index].story = story
         lakes[index].gallery = gallery
     }
+    
+    func touch() { lakesVersion += 1 }
     
 }

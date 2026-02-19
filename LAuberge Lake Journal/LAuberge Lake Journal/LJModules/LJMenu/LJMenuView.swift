@@ -33,9 +33,9 @@ struct LJMenuView: View {
             case 0:
                 LJHomeView(viewModel: viewModel)
             case 1:
-                Color.blue
+                LJStatsView(viewModel: viewModel)
             case 2:
-                Color.yellow
+                LJGalleryView(viewModel: viewModel)
             default:
                 Text("default")
             }

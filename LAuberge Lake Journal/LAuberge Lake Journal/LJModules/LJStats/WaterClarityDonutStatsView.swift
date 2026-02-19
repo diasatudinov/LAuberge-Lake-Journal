@@ -1,9 +1,16 @@
+//
+//  WaterClarityDonutStatsView.swift
+//  LAuberge Lake Journal
+//
+//
+
+
 import SwiftUI
 
 // MARK: - Main View
 
 struct WaterClarityDonutStatsView: View {
-    @ObservedObject var viewModel: LakesViewModel
+    @ObservedObject var viewModel: LJLakeViewModel
 
     private var total: Int { viewModel.lakes.count }
 
@@ -59,10 +66,8 @@ struct WaterClarityDonutStatsView: View {
 
                     VStack(spacing: 6) {
                         Text("Global")
-                            .font(.headline)
-                        Text("\(total) lakes")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(.white)
                     }
                 } else {
                     DonutChart(
@@ -77,42 +82,41 @@ struct WaterClarityDonutStatsView: View {
                         ],
                         lineWidth: 28
                     )
-                    .frame(width: 220, height: 220)
+                    .frame(height: 220)
+                    .frame(maxWidth: .infinity)
+                   // .frame(width: 300, height: 200)
 
-                    Text("No data")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
+                    Text("no data")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
             }
 
             // MARK: - Legend / breakdown
-            VStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 10) {
                 ForEach(orderedCases, id: \.self) { clarity in
                     let count = countsByClarity[clarity, default: 0]
                     let percent = hasData ? (Double(count) / Double(total) * 100.0) : 0.0
 
-                    HStack(spacing: 10) {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(hasData && count > 0 ? clarity.color : Color.gray.opacity(0.25))
-                            .frame(width: 18, height: 10)
+                    HStack(spacing: 5) {
+                        Circle()
+                            .fill(clarity.color)
+                            .frame(width: 12, height: 12)
 
                         Text(clarity.text)
-                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.5))
 
-                        Spacer()
-
-                        Text(String(format: "%.0f%%", percent))
+                        Text(String(format: "(%.0f%%)", percent))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white.opacity(0.5))
                             .monospacedDigit()
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.horizontal, 2)
                 }
             }
         }
         .padding()
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -137,6 +141,7 @@ struct DonutChart: View {
                 DonutArc(startAngle: seg.startAngle, endAngle: seg.endAngle)
                     .stroke(seg.color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .butt))
                     .rotationEffect(.degrees(0))
+                    .padding()
             }
         }
         .drawingGroup()
@@ -162,4 +167,8 @@ struct DonutArc: Shape {
         )
         return p
     }
+}
+
+#Preview {
+    LJStatsView(viewModel: LJLakeViewModel())
 }
